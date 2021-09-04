@@ -1,46 +1,40 @@
-<?php 
-// $con=new mysqli('localhost','root','');
-// mysqli_select_db($con,'chakri_d72');
+<?php
+// include database and object files
+include_once 'config1.php';
+include_once 'user.php';
+ 
+// get database connection
+$database = new Database();
+$db = $database->getConnection();
+ 
+// prepare user object
+$user = new User($db);
 
-require_once("db.php");       
-     
-    if(isset($_GET['username']) && $_GET['username'] !='' && isset($_GET['password']) && $_GET['password'] !='')
-    {
+// set ID property of user to be edited
+$user->username = isset($_GET['username']) ? $_GET['username'] : die();
+$user->password = base64_encode(isset($_GET['password']) ? $_GET['password'] : die());  
 
-                    $user = $_GET["username"];
-                    $pass = $_GET["password"];
-                
-                
-                $getData="SELECT * FROM user_tbl";
-
-                $result=mysqli_query($con,$getData);
-
-                $userId = "";
-
-                 while($r <= mysqli_fetch_row($result)){
-
-                    $userId = $r[0];
-                 }
-
-                 if($result -> num_rows > 0){
-                     $resp["status"]="1";
-                     $resp["userId"]="$userId";
-                     $resp["message"]="Login Successfully";
-                 } 
-                 else{
-                     $resp['status']="-2";
-                     $resp['message']="Enter correct Username and Password";
-                 }
-
-    }
-    else{
-            $resp['status']="-2";
-            $resp['message']="Enter correct username";
-    }
-
-    header('content-type: application/json');
-
-    $response["response"]=$resp;
-
-    echo json_encode($response);
+// read the details of user to be edited
+$stmt = $user->login();
+if($stmt->rowCount() > 0){
+    // get retrieved row
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    // create array
+    $user_arr=array(
+        "status" => true,
+        "message" => "Successfully Login!",
+        "id" => $row['id'],
+        "userID" => $row['username'],
+        "name" => $row['name'],
+        "role" => $row['roletype']
+    );
+}
+else{
+    $user_arr=array(
+        "status" => false,
+        "message" => "Invalid Username or Password!",
+    );
+}
+// make it json format
+print_r(json_encode($user_arr));
 ?>
