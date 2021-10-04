@@ -35,13 +35,15 @@ class API {
 }
 
 $API = new API;
+header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token, apikey');
+header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token, apiKey');
 $seceretKey = '32Xhsdf7asd';
 $headers = getallheaders();
-if(isset($headers['apikey'])){
-    $api_key = $headers['apikey'];
+
+if(isset($headers['apiKey'])){
+    $api_key = $headers['apiKey'];
     if($api_key != $seceretKey) {
         echo json_encode(["status"=>403, "message"=>"Authorization faild1"]);
         exit;

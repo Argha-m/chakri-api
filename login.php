@@ -10,9 +10,10 @@ $db = $database->getConnection();
 // prepare user object
 $user = new User($db);
 
+
 // set ID property of user to be edited
 $user->username = isset($_GET['username']) ? $_GET['username'] : die();
-$user->password = base64_encode(isset($_GET['password']) ? $_GET['password'] : die());  
+$user->password = base64_encode(isset($_GET['password']) ? $_GET['password'] : die());
 
 // read the details of user to be edited
 $stmt = $user->login();
@@ -35,6 +36,12 @@ else{
         "message" => "Invalid Username or Password!",
     );
 }
+
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token');
+
 // make it json format
-print_r(json_encode($user_arr));
+echo json_encode($user_arr);
 ?>

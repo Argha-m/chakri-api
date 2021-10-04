@@ -24,8 +24,7 @@ class User{
             return false;
         }
         // query to insert record of new user signup
-        $query = "INSERT INTO
-                    " . $this->table_name . "
+        $query = "INSERT INTO " . $this->table_name . "
                 SET
                 username=:username, password=:password";
     
@@ -54,6 +53,7 @@ class User{
 
     // login user method
     function login(){
+		echo $this->username;
 
         // select all query with user inputed username and password
         $query = "SELECT user_role_tbl.roletype,user_tbl.* FROM user_role_tbl INNER JOIN user_tbl ON user_role_tbl.roleid = user_tbl.roleid WHERE
@@ -79,8 +79,7 @@ class User{
         $stmt->execute();
         if($stmt->rowCount() > 0){
             return true;
-        }
-        else{
+        } else {
             return false;
         }
     }

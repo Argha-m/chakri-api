@@ -1,32 +1,106 @@
 <?php
+	header('Content-Type: application/json');
+	header("Access-Control-Allow-Origin: *");
+	header("Access-Control-Allow-Headers: access");
+	header("Access-Control-Allow-Methods: POST");
+	header("Content-Type: application/json; charset=UTF-8");
+	header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With, apiKey");
+	$seceretKey = '32Xhsdf7asd';
+	$headers = getallheaders();
  
- include_once 'config1.php';
- include_once 'user.php';
+	//DB connt file
+	include_once 'config1.php';
  
-$database = new Database();
-$db = $database->getConnection();
- 
-$user = new User($db);
- 
-// set user property values
-$user->username = $_POST['username'];
-$user->password = base64_encode($_POST['password']);
-// $user->created = date('Y-m-d H:i:s');
- 
-// create the user
-if($user->signup()){
-    $user_arr=array(
-        "status" => true,
-        "message" => "Successfully Signup!",
-        "id" => $user->id,
-        "username" => $user->username
-    );
-}
-else{
-    $user_arr=array(
-        "status" => false,
-        "message" => "Username already exists!"
-    );
-}
-print_r(json_encode($user_arr));
+	$database = new Database();
+	$conn = $database->getConnection();
+	
+	//Request data input variable
+	$data = json_decode(file_get_contents("php://input"));
+	
+	//Output variable
+	$returnData = [];
+	
+	// Check if it's a post method
+	if($_SERVER["REQUEST_METHOD"] != "POST"){
+		
+		$returnData = array(
+			"status" => 404,
+			"message" => "Page Not Found!"
+		);
+		
+	}
+	else{
+		// Check if comes with proper authentication 
+		if (isset($headers['apiKey']) && $headers['apiKey'] === $seceretKey) {
+			
+			//check required value is not empty or wrong Key
+			if( !isset($data->name) || !isset($data->email) || !isset($data->password) || empty(trim($data->name)) || empty(trim($data->email)) || empty(trim($data->password)) ){
+				
+				$returnData = array(
+					"status" => 422,
+					"message" => "Please Fill in all Required Fields!"
+				);
+				
+			}
+			// If everything goes right
+			else {
+				$name = trim($data->name);
+				$email = trim($data->email);
+				$password = trim($data->password);
+				
+				try{
+					$check_email = "SELECT `email` FROM `user_tbl` WHERE `email`=:email";
+					$check_email_stmt = $conn->prepare($check_email);
+					$check_email_stmt->bindValue(':email', $email,PDO::PARAM_STR);
+					$check_email_stmt->execute();
+					
+					//If email already exist
+					if($check_email_stmt->rowCount()) {
+						$returnData = array(
+							"status" => 422,
+							"message" => "This E-mail already in use!"
+						);
+					} 
+					// Or add new User to DB
+					else {
+						//Insert data
+						$insert_query = "INSERT INTO `user_tbl`(`name`, `email`,`password`) VALUES(:name, :email,:password)";
+					
+						$insert_stmt = $conn->prepare($insert_query);
+						
+						// DATA BINDING
+						$insert_stmt->bindValue(':name', htmlspecialchars(strip_tags($name)),PDO::PARAM_STR);
+						$insert_stmt->bindValue(':email', $email,PDO::PARAM_STR);
+						$insert_stmt->bindValue(':password', password_hash($password, PASSWORD_DEFAULT),PDO::PARAM_STR);
+						
+						$insert_stmt->execute();
+						
+						$returnData = array(
+							"status" => 200,
+							"message" => "You have successfully registered."
+						);
+						
+					}
+					
+				}
+				//If any server error occurs
+				catch(PDOException $exception){
+					$returnData = array(
+						"status" => 500,
+						"message" => $exception->getMessage()
+					);
+				}
+			}
+		}
+		// If authentication failed
+		else {
+			$returnData = array(
+				"status" => 403,
+				"message" => "Authorization faild!"
+			);
+		}
+	}
+	
+	//Return ultimate value
+	print_r(json_encode($returnData));
 ?>
