@@ -34,7 +34,13 @@
 		if (isset($headers['apiKey']) && $headers['apiKey'] === $seceretKey) {
 			
 			//check required value is not empty or wrong Key
-			if( !isset($data->name) || !isset($data->email) || !isset($data->password) || empty(trim($data->name)) || empty(trim($data->email)) || empty(trim($data->password)) ){
+			if( !isset($data->name) || 
+			!isset($data->email) || 
+			!isset($data->password) || 
+			empty(trim($data->name)) || 
+			empty(trim($data->email)) || 
+			empty(trim($data->password)) || 
+			empty(trim($data->roleType)) ){
 				
 				$returnData = array(
 					"status" => 422,
@@ -45,8 +51,10 @@
 			// If everything goes right
 			else {
 				$name = trim($data->name);
+				$user_name = explode (" ", $name)[0];
 				$email = trim($data->email);
 				$password = trim($data->password);
+				$roleType = trim($data->roleType);
 				
 				try{
 					$check_email = "SELECT `email` FROM `user_tbl` WHERE `email`=:email";
@@ -64,14 +72,16 @@
 					// Or add new User to DB
 					else {
 						//Insert data
-						$insert_query = "INSERT INTO `user_tbl`(`name`, `email`,`password`) VALUES(:name, :email,:password)";
+						$insert_query = "INSERT INTO `user_tbl`(`username`, `name`, `email`, `password`, `roleid`) VALUES(:username, :name, :email, :password, :roleid)";
 					
 						$insert_stmt = $conn->prepare($insert_query);
 						
 						// DATA BINDING
+						$insert_stmt->bindValue(':username', htmlspecialchars(strip_tags($user_name)),PDO::PARAM_STR);
 						$insert_stmt->bindValue(':name', htmlspecialchars(strip_tags($name)),PDO::PARAM_STR);
 						$insert_stmt->bindValue(':email', $email,PDO::PARAM_STR);
 						$insert_stmt->bindValue(':password', password_hash($password, PASSWORD_DEFAULT),PDO::PARAM_STR);
+						$insert_stmt->bindValue(':roleid', htmlspecialchars(strip_tags($roleType)),PDO::PARAM_STR);
 						
 						$insert_stmt->execute();
 						
@@ -102,5 +112,5 @@
 	}
 	
 	//Return ultimate value
-	print_r(json_encode($returnData));
+	echo json_encode($returnData);
 ?>
